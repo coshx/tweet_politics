@@ -7,31 +7,34 @@
 # -text
 # -political (Boolean; answers whether a tweet is political or not)
 
-from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
+from nltk.tokenize import WhitespaceTokenizer
 
-from tweet_preprocess import cleanup
+from tweet_preprocess import cleanup_text, cleanup_tokens
 from tf_idf import tf_idf_corpus
 
-stopwords_english = stopwords.words("english")
+
+def tokenize_tweet(tweet, tokenizer=WhitespaceTokenizer()):
+    """
+    tokenize a single tweet
+    """
+    #cleanup tweets
+    tweet["text"] = cleanup_text(tweet["text"])
+    #tokenize tweets using NLTK word tokenizer
+    #use the whitespace tokenizer to preserve contractions,
+    #which will be expanded during tokenization processing
+    tweet["tokens"] = tokenizer.tokenize(tweet["text"])
+    #clean up tokenized tweets
+    tweet["tokens"] = cleanup_tokens(tweet["tokens"])
+
+    return tweet
+
 
 def tokenize_corpus(corpus):
     """
     return a tweet corpus in tokenized form
     """
-    global stopwords_english
-
-    for tweet in corpus:
-        #cleanup tweets
-        tweet["text"] = cleanup(tweet["text"])
-        #tokenize tweets using NLTK word tokenizer
-        tweet["tokens"] = word_tokenize(tweet["text"])
-        #remove stopwords
-        tweet["tokens"] = [
-            token
-            for token in tweet["tokens"]
-            if not token in stopwords_english
-        ]
+    tokenizer = WhitespaceTokenizer()
+    corpus = [tokenize_tweet(tweet, tokenizer) for tweet in corpus]
 
     #remove empty tweets from corpus
     return [tweet for tweet in corpus if len(tweet["tokens"]) > 0]
@@ -46,11 +49,11 @@ def tweet_featureset(corpus, algorithm="BOOL"):
     """
 
     #tokenize corpus
-    corpus = tokenize_corpus(corpus, algorithm)
+    corpus = tokenize_corpus(corpus)
 
     #extract features from tweet corpus
     token_corpus = [tweet["tokens"] for tweet in corpus]
-    feature_corpus = tf_idf_corpus(token_corpus)
+    feature_corpus = tf_idf_corpus(token_corpus, algorithm)
 
     #pair features with respective tags
     tagged_features = [

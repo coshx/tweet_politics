@@ -94,6 +94,7 @@ def idf_corpus(corpus):
     for document in corpus:
         vocab |= set(document)
 
+    #then, calculate the idf for each term in the vocab
     idf_set = {}
     for term in vocab:
         idf_set[term] = idf(term, corpus)
