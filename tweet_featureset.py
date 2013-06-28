@@ -37,13 +37,16 @@ def tokenize_corpus(corpus):
     return [tweet for tweet in corpus if len(tweet["tokens"]) > 0]
 
 
-def tweet_featureset(corpus):
+#use boolean frequency algorithm for tweets
+#because tweets are so short there is no reason to count words in each tweet,
+#just detect if a word is in the tweet
+def tweet_featureset(corpus, algorithm="BOOL"):
     """
     build a featureset for a classifier using a tweet corpus
     """
 
     #tokenize corpus
-    corpus = tokenize_corpus(corpus)
+    corpus = tokenize_corpus(corpus, algorithm)
 
     #extract features from tweet corpus
     token_corpus = [tweet["tokens"] for tweet in corpus]
