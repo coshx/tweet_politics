@@ -30,7 +30,7 @@ def remove_punctuation(func):
     #preserve apostrophes between letters for contractions
     #strip possessives
     return lambda text: re.sub(r"[`~!@#$%^&*()-=_+,./<>?;':\"\[\]{}\|]",
-        "", func(text))
+        " ", func(text))
 
 
 def remove_possessives(func):

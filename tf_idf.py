@@ -11,6 +11,24 @@ from __future__ import division
 import math
 
 
+class IdfDict(dict):
+    """
+    dictionary of idf values
+    """
+
+    def __init__(self, corpus_size, *args, **kwargs):
+        super(IdfDict, self).__init__(*args, **kwargs)
+        self.corpus_size = corpus_size
+
+
+    def __getitem__(self, key):
+        #if a term is not in the dictionary, calculate an idf value anyway
+        if not key in self:
+            return math.log(self.corpus_size)
+        else:
+            return super(IdfDict, self).__getitem__(key)
+
+
 def tf_raw(term, document):
     return document.count(term)
 
@@ -56,7 +74,6 @@ def idf(term, corpus):
     idf is the log of the ratio between the total number of documents
     in the corpus and the number of docs in the corpus with the given term
     """
-
     corpus_size = len(corpus)
     docs_with_term = 0
 
@@ -69,18 +86,17 @@ def idf(term, corpus):
     return math.log( corpus_size / (docs_with_term+1) )
 
 
-def tf_idf(term, document, corpus, algorithm="RAW", idfval=None):
+def tf_idf(term, document, corpus, algorithm="RAW"):
     """
     return tf-idf score
-    if idf score was calculated previously, don't calculate it again;
-    this occurs when the tf-idf of a term is being calculated for all documents
-    in a corpus
     """
-
-    if idf == None:
-        return tf(term, document, algorithm) * idf(term, corpus)
+    #if idf score was calculated previously, don't calculate it again;
+    #this occurs when the tf-idf of a term is being calculated
+    #for all documents in a corpus
+    if type(corpus) is float:
+        return tf(term, document, algorithm) * corpus
     else:
-        return tf(term, document, algorithm) * idfval
+        return tf(term, document, algorithm) * idf(term, corpus)
 
 
 def idf_corpus(corpus):
@@ -95,20 +111,20 @@ def idf_corpus(corpus):
         vocab |= set(document)
 
     #then, calculate the idf for each term in the vocab
-    idf_set = {}
+    idf_set = IdfDict(len(corpus))
     for term in vocab:
         idf_set[term] = idf(term, corpus)
 
     return idf_set
 
 
-def tf_idf_corpus(corpus, algorithm="RAW"):
+def tf_idf_corpus(corpus, algorithm="RAW", idf_set=None):
     """
     calculates tf-idf score for all terms in every document of a corpus
     """
-    
     #retrieve idf scores for all words in corpus
-    idf_set = idf_corpus(corpus)
+    if idf_set == None:
+        idf_set = idf_corpus(corpus)
 
     #calculate tf-idf score for every document
     doc_set = []
@@ -118,7 +134,7 @@ def tf_idf_corpus(corpus, algorithm="RAW"):
         #calculate tf and then tf-idf score for every term
         for term in doc_vocab:
             tf_score = tf(term, document, algorithm)
-            tf_idf_set[term] = tf_idf(term, document, corpus, algorithm, idf_set[term])
+            tf_idf_set[term] = tf_idf(term, document, idf_set[term], algorithm)
 
         doc_set.append(tf_idf_set)
 
