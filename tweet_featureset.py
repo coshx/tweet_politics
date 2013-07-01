@@ -63,24 +63,32 @@ class TweetFeatureset(object):
         self.idf_set = idf_corpus(token_corpus)
 
 
-    def build_featureset(self, corpus, algorithm="BOOL"):
+    def build_tagged_featureset(self, tweets, algorithm="BOOL"):
         """
         build a featureset for a classifier using a tweet corpus
+        and pair it with a tag (political/apolitical)
         use boolean frequency algorithm for tweets because tweets are so short
         there is no reason to count words in each tweet,
         just detect if a word is in the tweet
         """
-        #tokenize corpus
-        corpus = TweetFeatureset.tokenize_corpus(corpus)
-
-        #extract features from tweet corpus
-        token_corpus = [tweet["tokens"] for tweet in corpus]
-        feature_corpus = tf_idf_corpus(token_corpus, algorithm, self.idf_set)
-
         #pair features with respective tags
         tagged_features = [
-            (features, corpus[i]["political"])
-            for i, features in enumerate(feature_corpus)
+            (features, tweets[i]["political"])
+            for i, features in enumerate(self.build_featureset(tweets, algorithm))
         ]
 
         return tagged_features
+
+
+    def build_featureset(self, tweets, algorithm="BOOL"):
+        """
+        build a featureset with no pairing to a tag
+        """
+        #tokenize corpus
+        corpus = TweetFeatureset.tokenize_corpus(tweets)
+
+        #extract features from tweet corpus
+        token_corpus = [tweet["tokens"] for tweet in tweets]
+        feature_corpus = tf_idf_corpus(token_corpus, algorithm, self.idf_set)
+
+        return feature_corpus
