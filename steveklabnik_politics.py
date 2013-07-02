@@ -121,7 +121,6 @@ def get_classified_tweet():
     #is not the last tweet, but given small enough values CACHE_TIMEOUT,
     #this problem would be a decent sacrifice for performance
     if not "tweet" in cache:
-        print "that shit is not cached"
         #fetch last tweet
         tweet = get_raw_tweet()
 
@@ -142,7 +141,6 @@ def get_classified_tweet():
         return tweet
     #if the tweet is in the cache, serve that
     else:
-        print "that shit is cached"
         return cache.get("tweet")
 
 
