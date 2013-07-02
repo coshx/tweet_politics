@@ -3,6 +3,8 @@
 
 import pickle
 import os
+import json
+from urllib2 import urlopen
 
 import twitter
 from nltk import NaiveBayesClassifier
@@ -22,6 +24,12 @@ TWITTER_CONSUMER_SECRET = os.getenv("TWITTER_CONSUMER_SECRET")
 TWITTER_OAUTH_TOKEN = os.getenv("TWITTER_OAUTH_TOKEN")
 TWITTER_OAUTH_TOKEN_SECRET = os.getenv("TWITTER_OAUTH_TOKEN_SECRET")
 TWITTER_USER = "steveklabnik"
+TWITTER_OEMBED_API_URL = "https://api.twitter.com/1/statuses/oembed.json?" \
++ "align=center" \
++ "&maxwidth=500" \
++ "&hide_media=false" \
++ "&hide_thread=false" \
++ "&id="
 
 #cache settings
 CACHE_TIMEOUT = 60 * 5 #timeout after 5 minutes
@@ -92,6 +100,16 @@ def load_featureset():
     return featureset
 
 
+def get_tweet_display(tweet_id):
+    """
+    Use Twitter's oEmbed API to retrieve a HTML snippet of the tweet
+    """
+    url = urlopen(TWITTER_OEMBED_API_URL + str(tweet_id))
+    data = json.load(url)
+
+    return data["html"]
+
+
 def get_classified_tweet():
     """
     load a tweet and classify it
@@ -103,7 +121,7 @@ def get_classified_tweet():
     #is not the last tweet, but given small enough values CACHE_TIMEOUT,
     #this problem would be a decent sacrifice for performance
     if not "tweet" in cache:
-        print "That shit is not cashed"
+        print "that shit is not cached"
         #fetch last tweet
         tweet = get_raw_tweet()
 
@@ -115,13 +133,16 @@ def get_classified_tweet():
         tweet_features = tf.build_featureset([tweet])[0]
         tweet["political"] = classifier.classify(tweet_features)
 
+        #get HTML display of tweet
+        tweet["html"] = get_tweet_display(tweet["id"])
+
         #save tweet to the cache
         cache.set("tweet", tweet, time=CACHE_TIMEOUT)
 
         return tweet
     #if the tweet is in the cache, serve that
     else:
-        print "That shit is cashed"
+        print "that shit is cached"
         return cache.get("tweet")
 
 
