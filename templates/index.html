@@ -1,37 +1,40 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
 
-{% block content %}
-<h2>Is Steve Klabnik tweeting about politics?</h2>
+  <head>
+    <title>Your Favorite Ruby-codin' Deleuzian</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/static/css/index.css" rel="stylesheet" media="screen">
 
-<img src="/static/img/steveklabnik.jpg" alt="Steve Klabnik" />
+    <script src="/static/js/jquery-1.10.1.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+  </head>
 
-{% if tweet.political %}
-<h1>YES</h1>
-{% else %}
-<h1>NO</h1>
-{% endif %}
+  <body>
+    <div class="container">
+      <h2>Is Steve Klabnik tweeting about politics?</h2>
 
-{% if tweet.retweet and tweet.political %}
-<h4>(Well, <i>retweeting</i> about politics)</h4>
-{% endif %}
+      <img src="/static/img/steveklabnik.jpg" alt="Steve Klabnik" />
 
-{% if tweet.retweet and not tweet.political %}
-<h4>(Well, not <i>retweeting</i> about politics)</h4>
-{% endif %}
+      {% if tweet.political %}
+      <h1>YES</h1>
+      {% else %}
+      <h1>NO</h1>
+      {% endif %}
 
-<div id="tweet">
-{{ tweet.html|safe }}
-</div>
+      {% if tweet.retweet and tweet.political %}
+      <h4>(Well, <i>retweeting</i> about politics)</h4>
+      {% endif %}
 
-<div>
-  <a href="/wrong">
-  {% if not "corrected" in tweet %}
-    {% if tweet.political %}
-    Hey, this isn't about politics!
-    {% else %}
-    Hey, this IS about politics! 
-    {% endif %}
-  {% endif %}
-  </a>
-</div>
-{% endblock %}
+      {% if tweet.retweet and not tweet.political %}
+      <h4>(Well, not <i>retweeting</i> about politics)</h4>
+      {% endif %}
+
+      <div id="tweet">
+      {{ tweet.html|safe }}
+      </div>
+    </div>
+  </body>
+
+</html>
