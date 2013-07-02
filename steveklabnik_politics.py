@@ -7,11 +7,12 @@ import os
 import twitter
 from nltk import NaiveBayesClassifier
 from flask import Flask, render_template
+import pylibmc
 
 from tweet_featureset import TweetFeatureset
 
 
-DEBUG = True
+DEBUG = True if os.getenv("STEVEKLABNIK_TWEETS_POLITICS_DEBUG") == "True" else False
 CLASSIFIER_FILE = "classifier.txt"
 FEATURESET_FILE = "featureset.txt"
 
@@ -22,11 +23,31 @@ TWITTER_OAUTH_TOKEN = os.getenv("TWITTER_OAUTH_TOKEN")
 TWITTER_OAUTH_TOKEN_SECRET = os.getenv("TWITTER_OAUTH_TOKEN_SECRET")
 TWITTER_USER = "steveklabnik"
 
+#cache settings
+CACHE_TIMEOUT = 60 * 5 #timeout after 5 minutes
+
+#initialize Flask app
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+#initialize memcached
+if DEBUG:
+    #development settings
+    cache = pylibmc.Client(
+        servers=["127.0.0.1"],
+        binary=True
+    )
+else:
+    #production settings
+    cache = pylibmc.Client(
+        servers=[os.environ.get('MEMCACHIER_SERVERS')],
+        username=os.environ.get('MEMCACHIER_USERNAME'),
+        password=os.environ.get('MEMCACHIER_PASSWORD'),
+        binary=True
+    )
 
-def get_tweet():
+
+def get_raw_tweet():
     """
     fetch the latest tweet of TWITTER_USER (steveklabnik)
     """
@@ -73,23 +94,45 @@ def load_featureset():
     return featureset
 
 
+def get_classified_tweet():
+    """
+    load a tweet and classify it
+    """
+    global cache
+    #check if the last tweet is in the cache
+    #if not, fetch it
+    #caching would create the possibility that the tweet displayed
+    #is not the last tweet, but given small enough values CACHE_TIMEOUT,
+    #this problem would be a decent sacrifice for performance
+    if not "tweet" in cache:
+        print "That shit is not cashed"
+        #fetch last tweet
+        tweet = get_raw_tweet()
+
+        #load classifier and featureset
+        classifier = load_classifier()
+        tf = load_featureset()
+
+        #classify tweet
+        tweet_features = tf.build_featureset([tweet])[0]
+        tweet["political"] = classifier.classify(tweet_features)
+
+        #save tweet to the cache
+        cache.set("tweet", tweet, time=CACHE_TIMEOUT)
+
+        return tweet
+    #if the tweet is in the cache, serve that
+    else:
+        print "That shit is cashed"
+        return cache.get("tweet")
+
+
 @app.route("/")
 def index():
-    #fetch last tweet
-    tweet = get_tweet()
+    #fetch classified tweet
+    tweet = get_classified_tweet()
 
-    #load classifier and featureset
-    classifier = load_classifier()
-    tf = load_featureset()
-
-    #build context
-    feature = tf.build_featureset([tweet])[0]
-    is_political = classifier.classify(feature)
-
-    return render_template("index.html",
-        political=is_political,
-        tweet=tweet
-    )
+    return render_template("index.html", tweet=tweet)
 
 
 if __name__ == "__main__":

@@ -21,14 +21,18 @@
 
       <img src="/static/img/steveklabnik.jpg" alt="Steve Klabnik" />
 
-      {% if political %}
+      {% if tweet.political %}
       <h1>YES</h1>
       {% else %}
       <h1>NO</h1>
       {% endif %}
 
-      {% if tweet.retweet %}
+      {% if tweet.retweet and tweet.political %}
       <h4>(Well, <i>retweeting</i> about politics)</h4>
+      {% endif %}
+
+      {% if tweet.retweet and not tweet.political %}
+      <h4>(Well, not <i>retweeting</i> about politics)</h4>
       {% endif %}
 
       <div id="tweet"></div>
