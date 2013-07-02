@@ -14,3 +14,5 @@ simplejson==3.3.0
 tweepy==2.0
 wsgiref==0.1.2
 nltk==2.0.4
+pylibmc==1.2.3
+

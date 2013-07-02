@@ -61,8 +61,6 @@ def get_raw_tweet():
     tweets = api.GetUserTimeline(
         screen_name=TWITTER_USER,
         trim_user=True,
-        exclude_replies=True,
-        include_rts=False,
         count=1
     )
     tweet = tweets[0]
